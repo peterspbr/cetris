@@ -84,13 +84,13 @@ int main()
             lastPosition += 64; // All the shapes is 64px tall, so the value is static.
             falling = false;
             drawShape = true;
-            printf("Last position of shape: %f\n", lastPosition); // For debug purposes.
+            cout << "Last position of shape: " << lastPosition << endl; // For debug purposes.
         }
 
         // Exit the game if the shepes reach the top of the window, just like in Tetris.
         if(lastPosition > windowHeight)
         {
-            printf("Game over\n");
+            cout << "Game over" << endl;
             exit(0);
         }
 
