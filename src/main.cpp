@@ -7,9 +7,9 @@ using namespace sf;
 
 // Integers
 const int windowWidth = 800, windowHeight = 600;
+int theShape, theShapeSize;
 int shapeLocation[] = {0, 64, 160, 256, 352, 480, 576};
 int shapeSize[] = {64, 96};
-int theShape, theShapeSize;
 
 // Double precision
 float positionX, positionY, velocity;
@@ -54,36 +54,44 @@ int main()
             return 1;  
         }
 
+        // Adjust the size of the shape to fit the quare one.
         if(theShape == 0)
         {
-            theShapeSize = 0;
+            theShapeSize = 0; // If the shape is the quare one, then adjust to 64x64.
         } else {
-            theShapeSize = 1;
+            theShapeSize = 1; // Else adjust to 96x64.
         }
 
         // Create sprite
         Sprite shapeSprite;
         shapeSprite.setTexture(shape);
 
-        float lastPosition;
+        float lastPosition; // Store the last position of the last drawn shape to calculate the last shape collision point.
 
-        shapeSprite.setOrigin(Vector2f(0.0f, 0.0f));
+        shapeSprite.setOrigin(Vector2f(0.0f, 0.0f)); // Set the origin of the sprite to the center of the texture.
 
         // Makes the sprite fall until it touches the end of the screen
-        if(positionY <= windowHeight - lastPosition)
+        if(positionY <= (windowHeight - lastPosition) - 64)
         {
             positionY += velocity;
             falling = true;
         }
-        else if(positionY >= windowHeight - lastPosition)
+        else if(positionY >= (windowHeight - lastPosition) - 64)
         {
-            falling = false;
-            drawShape = true;
             positionY = 0.0f;
             srand(time(NULL));
             theShape = rand() % 7;
-            lastPosition += 64;
-            printf("Last position of shape: %f\n", lastPosition);
+            lastPosition += 64; // All the shapes is 64px tall, so the value is static.
+            falling = false;
+            drawShape = true;
+            printf("Last position of shape: %f\n", lastPosition); // For debug purposes.
+        }
+
+        // Exit the game if the shepes reach the top of the window, just like in Tetris.
+        if(lastPosition > windowHeight)
+        {
+            printf("Game over\n");
+            exit(0);
         }
 
         // Sprite transformations
