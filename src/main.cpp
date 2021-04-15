@@ -7,20 +7,23 @@ using namespace sf;
 
 // Integers
 const int windowWidth = 800, windowHeight = 600;
-int shapeLocation[] = {0, 64, 160, 256, 352, 448, 544};
+int shapeLocation[] = {0, 64, 160, 256, 352, 480, 576};
 int shapeSize[] = {64, 96};
+int theShape, theShapeSize;
 
 // Double precision
 float positionX, positionY, velocity;
 
 // Bool
-bool falling = true;
+bool falling, drawShape;
 
 int main()
 {
     // Variables initialisation
+    theShape = 1;
     positionX = windowWidth / 2;
     velocity = 0.1f;
+    drawShape = true;
 
     // Create SFML window
     RenderWindow window(VideoMode(windowWidth, windowHeight), "Cetris");
@@ -44,14 +47,19 @@ int main()
         
         // Get texture from file
         Texture shape;
-        if(!shape.loadFromFile("assets/textures/shapes.png", IntRect(shapeLocation[1], 0, shapeSize[1], 64)))
+        if(!shape.loadFromFile("assets/textures/shapes.png", IntRect(shapeLocation[theShape], 0, shapeSize[theShapeSize], 64)))
         {
             cout << "Error: Cannot open texture" << endl;
             window.close();
             return 1;  
         }
 
-        shape.setSmooth(true); // Set antialiasing
+        if(theShape == 0)
+        {
+            theShapeSize = 0;
+        } else {
+            theShapeSize = 1;
+        }
 
         // Create sprite
         Sprite shapeSprite;
@@ -67,7 +75,10 @@ int main()
         } else if(positionY >= windowHeight - 64)
         {
             falling = false;
-            //positionY = 0;
+            drawShape = true;
+            positionY = 0.0f;
+            srand(time(NULL));
+            theShape = rand() % 7;
         }
 
         // Sprite transformations
@@ -75,7 +86,10 @@ int main()
 
         // Clear, draw then display
         window.clear(Color::Black);
-        window.draw(shapeSprite);
+        if(drawShape)
+        {
+            window.draw(shapeSprite);
+        }
         window.display();
     }
 
