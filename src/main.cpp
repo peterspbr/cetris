@@ -65,20 +65,25 @@ int main()
         Sprite shapeSprite;
         shapeSprite.setTexture(shape);
 
+        float lastPosition;
+
         shapeSprite.setOrigin(Vector2f(0.0f, 0.0f));
 
         // Makes the sprite fall until it touches the end of the screen
-        if(positionY <= windowHeight - 64)
+        if(positionY <= windowHeight - lastPosition)
         {
             positionY += velocity;
             falling = true;
-        } else if(positionY >= windowHeight - 64)
+        }
+        else if(positionY >= windowHeight - lastPosition)
         {
             falling = false;
             drawShape = true;
             positionY = 0.0f;
             srand(time(NULL));
             theShape = rand() % 7;
+            lastPosition += 64;
+            printf("Last position of shape: %f\n", lastPosition);
         }
 
         // Sprite transformations
