@@ -1,108 +1,210 @@
 #include <iostream>
-#include <unistd.h>
+
 #include <SFML/Graphics.hpp>
 
 using namespace std;
-using namespace sf;
 
-// Integers
-const int windowWidth = 800, windowHeight = 600;
-int theShape, theShapeSize;
-int shapeLocation[] = {0, 64, 160, 256, 352, 480, 576};
-int shapeSize[] = {64, 96};
+#define width  800
+#define height 600
 
-// Double precision
-float positionX, positionY, velocity;
+struct Point {int x, y;} a[4], b[4]; // Tetrominos axis
 
-// Bool
-bool falling, drawShape;
+const int fW = 10;
+const int fH = 20;
+
+int field[fW][fH] = {0};
+
+int coords[7][4] = {
+    1, 3, 5, 7,
+    2, 4, 5, 7,
+    3, 5, 4, 6,
+    3, 5, 4, 7,
+    2, 3, 5, 7,
+    3, 5, 7, 6,
+    2, 3, 4, 5
+};
+
+bool check()
+{
+    for(int i = 0; i < 4; i++)
+    {
+        if (a[i].x < 0 || a[i].x >= fW || a[i].y >= fH) {return false;}
+        else if(field[a[i].y][a[i].x]) {return false;}
+    }
+
+    return true;
+}
 
 int main()
 {
-    // Variables initialisation
-    theShape = 1;
-    positionX = windowWidth / 2;
-    velocity = 0.1f;
-    drawShape = true;
+    srand(time(NULL));
 
-    // Create SFML window
-    RenderWindow window(VideoMode(windowWidth, windowHeight), "Cetris");
+    sf::RenderWindow window(sf::VideoMode(width, height), "Cetris");
+    window.setFramerateLimit(30);
 
-    // Game loop
+    sf::Texture tTexture;
+    tTexture.loadFromFile("images/tetrominos.png");
+    sf::Texture bgTexture;
+    bgTexture.loadFromFile("images/bg.jpg");
+
+    sf::Sprite tetrominos;
+    tetrominos.setTexture(tTexture);
+    sf::Sprite bg;
+    bg.setTexture(bgTexture);
+
+    int xPos = 0, p = 1;
+    
+    float timer = 0, delay = 0.8;
+
+    bool rotate = false;
+
+    sf::Clock clock;
+
     while(window.isOpen())
     {
-        // Poll events
-        Event event;
+        float time = clock.getElapsedTime().asSeconds();
+        clock.restart();
+        timer += time;
+
+        sf::Event event;
+
         while(window.pollEvent(event))
-        {
-            if(event.type == Event::Closed)
+        {   
+            if(event.type == sf::Event::Closed)
             {
                 window.close();
             }
+            if(event.type == sf::Event::KeyPressed)
+            {
+                if(event.key.code == sf::Keyboard::Space)
+                {
+                    rotate = true;
+                }
+                else if (event.key.code == sf::Keyboard::Left)
+                {
+                    xPos = -1;
+                }
+                else if (event.key.code == sf::Keyboard::Right)
+                {
+                    xPos = 1;
+                }
+            }
 
-            if(Keyboard::isKeyPressed(Keyboard::Left) && positionX > 180 &&  falling){positionX -= 32.0f;}
-            if(Keyboard::isKeyPressed(Keyboard::Right) && positionX < 450 && falling){positionX += 32.0f;}
-            if(Keyboard::isKeyPressed(Keyboard::Down)){velocity = 0.3f;} else {velocity = 0.1f;}
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+            {
+                delay = 0.2;
+            }
         }
-        
-        // Get texture from file
-        Texture shape;
-        if(!shape.loadFromFile("assets/textures/shapes.png", IntRect(shapeLocation[theShape], 0, shapeSize[theShapeSize], 64)))
+
+        for(int i = 0; i < 4; i++)
         {
-            cout << "Error: Cannot open texture" << endl;
-            window.close();
-            return 1;  
+            b[i] = a[i];
+            a[i].x += xPos;
         }
 
-        // Adjust the size of the shape to fit the quare one.
-        if(theShape == 0)
+        if(!check())
         {
-            theShapeSize = 0; // If the shape is the quare one, then adjust to 64x64.
-        } else {
-            theShapeSize = 1; // Else adjust to 96x64.
+            for(int i = 0; i < 4; i++)
+            {
+                a[i] = b[i];
+            }
         }
 
-        // Create sprite
-        Sprite shapeSprite;
-        shapeSprite.setTexture(shape);
-
-        float lastPosition; // Store the last position of the last drawn shape to calculate the last shape collision point.
-
-        shapeSprite.setOrigin(Vector2f(0.0f, 0.0f)); // Set the origin of the sprite to the center of the texture.
-
-        // Makes the sprite fall until it touches the end of the screen
-        if(positionY <= (windowHeight - lastPosition) - 64)
+        if(rotate)
         {
-            positionY += velocity;
-            falling = true;
-        }
-        else if(positionY >= (windowHeight - lastPosition) - 64)
-        {
-            positionY = 0.0f;
-            srand(time(NULL));
-            theShape = rand() % 7;
-            lastPosition += 64; // All the shapes is 64px tall, so the value is static.
-            falling = false;
-            drawShape = true;
-            cout << "Last position of shape: " << lastPosition << endl; // For debug purposes.
+            Point point = a[1];
+
+            for(int i = 0; i < 4; i++)
+            {
+                int x = a[i].y - point.y;
+                int y = a[i].x - point.x;
+
+                a[i].x = point.x - x;
+                a[i].y = point.y + y;
+            }
+
+            if(!check())
+            {
+                for(int i = 0; i < 4; i++)
+                {
+                    a[i] = b[i];
+                }
+            }
         }
 
-        // Exit the game if the shepes reach the top of the window, just like in Tetris.
-        if(lastPosition > windowHeight)
+        if(timer > delay)
         {
-            cout << "Game over" << endl;
-            exit(0);
+            for(int i = 0; i < 4; i++)
+            {
+                b[i] = a[i];
+                a[i].y += 1;
+            }
+
+            if(!check())
+            {
+                for(int i = 0; i < 4; i++)
+                {
+                    field[b[i].y][b[i].x] = p;
+                }
+
+                p = 1 + rand()%7;
+                int n = rand()%7;
+
+                for(int i = 0; i < 4; i++)
+                {
+                    a[i].x = coords[n][i] % 2;
+                    a[i].y = coords[n][i] / 2;
+                }
+            }
+
+            timer = 0;
         }
 
-        // Sprite transformations
-        shapeSprite.setPosition(Vector2f(positionX, positionY));
+        int k = fH - 1;
 
-        // Clear, draw then display
-        window.clear(Color::Black);
-        if(drawShape)
+        for (int i = fH - 1; i > 0; i--)
         {
-            window.draw(shapeSprite);
+            int count = 0;
+            for (int j = 0; j < fW; j++)
+            {
+                if (field[i][j])
+                {
+                    count++;
+                }
+                field[k][j] = field[i][j];
+            }
+
+            if (count < fW)
+            {
+                k--;
+            }
         }
+
+        xPos = 0;
+        rotate = false;
+        delay = 0.8;
+
+        window.clear(sf::Color::Black);
+        window.draw(bg);
+
+        for(int i = 0; i < fH; i++)
+        {
+            for(int j = 0; j < fW; j++)
+            {
+                if(field[i][j] == 0) {continue;}
+                tetrominos.setTextureRect(sf::IntRect(field[i][j] * 16, 0, 16, 16));
+                tetrominos.setPosition(j * 18, i * 18);
+                window.draw(tetrominos);
+            }
+        }
+
+        for(int i = 0; i < 4; i++)
+        {
+            tetrominos.setTextureRect(sf::IntRect(p * 16, 0, 16, 16));
+            tetrominos.setPosition(a[i].x * 18, a[i].y * 18);
+            window.draw(tetrominos);
+        }
+
         window.display();
     }
 
